@@ -188,7 +188,7 @@ export default function DashboardPage() {
   const phoneCharges = data ? Math.round((data.totals.savedUsd * 1000) / 10) : 0
   // 10 Wh per charge; estimate energy saved: savedUsd / 0.0003 * Wh → kWh
   // Actually let's derive from waterMl: 500ml per bottle
-  const waterBottles = data ? Math.round(data.totals.waterMl / 500) : 0
+  const waterBottles = data ? Math.ceil(data.totals.waterMl / 500) : 0
   // carbonG / 192 g per km
   const carKm = data ? +(data.totals.carbonG / 192).toFixed(1) : 0
 
