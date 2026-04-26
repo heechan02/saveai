@@ -74,13 +74,17 @@ export async function routeMessage(args: {
 
   let contextMessages: { role: 'user' | 'assistant' | 'system'; content: string }[]
 
-  if (mubitCtx.mubitUsed && mubitCtx.messages.length > 0) {
+  if (useMinimalContext) {
+    // Trim mode: use only the 2 most recent messages for minimal context
+    const dbHistory = await getDbHistory(conversationId, 2)
+    contextMessages = dbHistory
+  } else if (mubitCtx.mubitUsed && mubitCtx.messages.length > 0) {
     contextMessages = mubitCtx.messages as { role: 'user' | 'assistant' | 'system'; content: string }[]
     if (process.env.NODE_ENV === 'development') {
       console.log('[MuBit] context used — trimmedTokens:', mubitCtx.trimmedTokens, 'savedPercent:', mubitCtx.savedPercent)
     }
   } else {
-    const dbHistory = await getDbHistory(conversationId, useMinimalContext ? 4 : 10)
+    const dbHistory = await getDbHistory(conversationId, 10)
     contextMessages = dbHistory
     if (!mubitCtx.mubitUsed && process.env.NODE_ENV === 'development') {
       console.warn('[MuBit] offline — using fallback DB context')
@@ -95,8 +99,7 @@ export async function routeMessage(args: {
   const response = await callGateway(model, allMessages)
   const { usd, water_ml, carbon_g } = estimateCost(model, response.tokensIn, response.tokensOut)
 
-  // contextSaved = true whenever MuBit injected context into the request
-  const contextSaved = mubitCtx.mubitUsed && mubitCtx.messages.length > 0
+  const contextSaved = useMinimalContext || (mubitCtx.mubitUsed && mubitCtx.messages.length > 0)
 
   // Async: persist to DB + remember in MuBit + record context_trim savings
   Promise.resolve().then(async () => {
