@@ -128,7 +128,7 @@ function relativeTime(dateStr: string): string {
 }
 
 // --- Top Nav (reused across pages) ---
-export function TopNav({ active }: { active: 'chat' | 'dashboard' | 'methodology' }) {
+export function TopNav({ active }: { active: 'chat' | 'dashboard' | 'methodology' | 'about' }) {
   return (
     <header
       className="flex items-center justify-between px-6 shrink-0 border-b border-neutral-800"
