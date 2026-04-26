@@ -1,10 +1,43 @@
+"use client"
+
+import { useState } from 'react'
 import Link from 'next/link'
 import ChatPanel from '@/components/ChatPanel'
+import ConversationSidebar from '@/components/ConversationSidebar'
+import type { Message } from '@/types'
 
 export default function Home() {
+  const [conversationId, setConversationId] = useState(() => crypto.randomUUID())
+  const [messages, setMessages] = useState<Message[]>([])
+  const [sidebarRefresh, setSidebarRefresh] = useState(0)
+
+  async function handleSelectConversation(id: string) {
+    setConversationId(id)
+    try {
+      const res = await fetch(`/api/conversations/${id}`)
+      if (res.ok) {
+        const data = await res.json()
+        setMessages(data.messages ?? [])
+      }
+    } catch {
+      setMessages([])
+    }
+  }
+
+  function handleNewChat() {
+    setConversationId(crypto.randomUUID())
+    setMessages([])
+  }
+
+  function handleMessagesChange(msgs: Message[]) {
+    setMessages(msgs)
+    // Trigger sidebar refresh after a new message is added
+    setSidebarRefresh((n) => n + 1)
+  }
+
   return (
     <div
-      className="h-screen flex flex-col"
+      className="h-screen overflow-hidden flex flex-col"
       style={{ background: '#0a0a0a', fontFamily: 'var(--font-inter), Inter, system-ui, sans-serif' }}
     >
       {/* Nav */}
@@ -30,9 +63,19 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Chat takes remaining height */}
-      <div className="flex-1 min-h-0">
-        <ChatPanel />
+      {/* Chat + Sidebar */}
+      <div className="flex flex-1 min-h-0">
+        <ConversationSidebar
+          activeId={conversationId}
+          onSelect={handleSelectConversation}
+          onNew={handleNewChat}
+          refreshTrigger={sidebarRefresh}
+        />
+        <ChatPanel
+          conversationId={conversationId}
+          messages={messages}
+          onMessagesChange={handleMessagesChange}
+        />
       </div>
     </div>
   )

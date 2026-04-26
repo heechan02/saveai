@@ -2,14 +2,15 @@
 
 import { useEffect, useRef, useState } from "react"
 import { motion, useSpring, animate } from "framer-motion"
-import { estimateCost } from "@/lib/estimator"
 import { SOURCES } from "@/lib/constants"
 import type { Model } from "@/types"
 
 export type Props = {
-  tokensIn: number
-  tokensOut: number
+  usd: number
+  water_ml: number
+  carbon_g: number
   model: Model
+  messageCount?: number
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -303,10 +304,8 @@ function IconCarbon() {
 // ─────────────────────────────────────────────────────────────────────────────
 // Main component
 // ─────────────────────────────────────────────────────────────────────────────
-export default function ImpactMeter({ tokensIn, tokensOut, model }: Props) {
-  const { usd, water_ml, carbon_g } = estimateCost(model, tokensIn, tokensOut)
-  const meta  = MODEL_META[model] ?? { name: model, tier: "—" }
-  const total = tokensIn + tokensOut
+export default function ImpactMeter({ usd, water_ml, carbon_g, model, messageCount = 0 }: Props) {
+  const meta = MODEL_META[model] ?? { name: model, tier: "—" }
 
   const dollarPct = Math.round((usd / DOLLAR_CEILING) * 100)
   const waterPct  = Math.round((water_ml / WATER_BENCHMARK) * 100)
@@ -331,13 +330,13 @@ export default function ImpactMeter({ tokensIn, tokensOut, model }: Props) {
             className="text-neutral-500 uppercase"
             style={{ fontSize: 10, letterSpacing: "0.18em" }}
           >
-            Impact of this request
+            Impact of this chat
           </span>
           <span className="font-semibold text-white" style={{ fontSize: 20, lineHeight: 1.3 }}>
             {meta.name}
           </span>
           <span className="text-neutral-500" style={{ fontSize: 11 }}>
-            {tokensIn.toLocaleString()} in · {tokensOut.toLocaleString()} out · {total.toLocaleString()} total
+            {messageCount} message{messageCount !== 1 ? "s" : ""} · session total
           </span>
         </div>
         <div className="flex items-center gap-2 mt-0.5">

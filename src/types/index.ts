@@ -7,6 +7,16 @@ export type Model =
 
 export type Provider = 'anthropic'
 
+export type Message = {
+  id: string
+  role: 'user' | 'assistant'
+  content: string
+  tier?: Tier
+  model?: Model
+  contextSaved?: boolean
+  savedPercent?: number
+}
+
 export type PreflightSignal = {
   kind: 'cost_cliff' | 'context_bloat' | 'duplicate'
   severity: 'low' | 'medium' | 'high'

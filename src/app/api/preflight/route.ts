@@ -3,6 +3,7 @@ import { db } from '@/db'
 import { messages } from '@/db/schema'
 import { eq, desc } from 'drizzle-orm'
 import { estimateCost, estimateTokensFromText } from '@/lib/estimator'
+import { emitSpan } from '@/lib/logfire'
 import type { Tier, PreflightSignal } from '@/types'
 
 // ---------------------------------------------------------------------------
@@ -28,7 +29,7 @@ function textSimilarity(a: string, b: string): number {
 // Checks
 // ---------------------------------------------------------------------------
 async function costCliffCheck(prompt: string, tier: Tier): Promise<PreflightSignal | null> {
-  if (tier !== 4 || prompt.trim().length >= 100) return null
+  if (tier !== 3 || prompt.trim().length >= 100) return null
 
   const tokensIn = estimateTokensFromText(prompt)
   const tokensOut = tokensIn * 2
@@ -148,6 +149,34 @@ export async function POST(req: NextRequest) {
     const signals: PreflightSignal[] = [costCliff, contextBloat, duplicate].filter(
       Boolean
     ) as PreflightSignal[]
+
+    // Emit Logfire spans for each signal (fire-and-forget)
+    const promptTokens = estimateTokensFromText(prompt)
+    for (const signal of signals) {
+      const sa = signal.suggestedAction as Record<string, number>
+      let usd = 0, water_ml = 0, carbon_g = 0
+      if (signal.kind === 'cost_cliff') {
+        usd = (sa.opusUsd ?? 0) - (sa.flashUsd ?? 0)
+        water_ml = (sa.opusWaterMl ?? 0) - (sa.flashWaterMl ?? 0)
+        carbon_g = (sa.opusCarbonG ?? 0) - (sa.flashCarbonG ?? 0)
+      } else if (signal.kind === 'context_bloat') {
+        const trimmedTokens = (sa.totalTokens ?? 0) - (sa.relevantTokens ?? 0)
+        const tierCost = estimateCost(tier === 3 ? 'claude-opus-4-7' : 'claude-haiku-4-5', trimmedTokens, 0)
+        usd = tierCost.usd; water_ml = tierCost.water_ml; carbon_g = tierCost.carbon_g
+      } else if (signal.kind === 'duplicate') {
+        const tierCost = estimateCost(tier === 3 ? 'claude-opus-4-7' : 'claude-haiku-4-5', promptTokens, promptTokens * 2)
+        usd = tierCost.usd; water_ml = tierCost.water_ml; carbon_g = tierCost.carbon_g
+      }
+      emitSpan('saveai.preflight.signal_generated', {
+        'signal.kind': signal.kind,
+        'signal.severity': signal.severity,
+        'usd_could_save': usd,
+        'water_ml_could_save': water_ml,
+        'carbon_g_could_save': carbon_g,
+        'prompt_length_chars': prompt.length,
+        'tier_selected': tier,
+      })
+    }
 
     return NextResponse.json({ signals })
   } catch (err) {
