@@ -23,6 +23,10 @@ export function estimateCost(
   tokensIn: number,
   tokensOut: number
 ): { usd: number; water_ml: number; carbon_g: number; energy_wh: number } {
+  if (tokensIn === 0 && tokensOut === 0) {
+    return { usd: 0, water_ml: 0, carbon_g: 0, energy_wh: 0 }
+  }
+
   const price = MODEL_PRICE[model]
   const usd = (tokensIn / 1_000_000) * price.in + (tokensOut / 1_000_000) * price.out
 

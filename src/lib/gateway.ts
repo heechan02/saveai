@@ -50,7 +50,8 @@ export async function callAnthropic(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
+      'Authorization': `Bearer ${apiKey}`,
+      'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify(body),
   })
