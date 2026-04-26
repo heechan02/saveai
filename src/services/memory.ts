@@ -63,10 +63,11 @@ export async function getContext(args: {
     const budget = args.tokenBudget ?? 4000
 
     // getContext() returns empty context_block — use recall() which works correctly
+    const recallLimit = budget <= 1000 ? 5 : 20
     const result = await client.recall({
       session_id: args.conversationId,
       query: args.currentPrompt,
-      limit: 20,
+      limit: recallLimit,
     }) as RecallResult
 
     const evidence = result?.evidence ?? []
