@@ -55,7 +55,6 @@ async function costCliffCheck(prompt: string, tier: Tier): Promise<PreflightSign
 }
 
 async function contextBloatCheck(prompt: string, conversationId: string): Promise<PreflightSignal | null> {
-  if (prompt.trim().length >= 100) return null
 
   const history = await db
     .select({ content: messages.content })
@@ -67,8 +66,8 @@ async function contextBloatCheck(prompt: string, conversationId: string): Promis
   const historyText = history.map((m) => m.content).join(' ')
   const totalTokens = estimateTokensFromText(historyText)
 
-  // 4,000 token threshold — realistic for a 10-message dev conversation
-  if (totalTokens <= 4000) return null
+  // 500 token threshold — triggers after ~4-5 messages for demo
+  if (totalTokens <= 500) return null
 
   const wordCount = prompt.trim().split(/\s+/).length
 
