@@ -1,11 +1,13 @@
 export type Tier = 1 | 2 | 3 | 4
 
 export type Model =
+  | 'llama-3.1-8b-instant'
+  | 'gpt-4o-mini'
   | 'claude-haiku-4-5'
   | 'claude-sonnet-4-6'
   | 'claude-opus-4-7'
 
-export type Provider = 'anthropic'
+export type Provider = 'anthropic' | 'openai' | 'groq'
 
 export type Message = {
   id: string

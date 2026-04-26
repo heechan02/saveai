@@ -1,16 +1,23 @@
-import { callAnthropic } from '@/lib/gateway'
+import { callAnthropic, callOpenAI, callGroq } from '@/lib/gateway'
 import { estimateCost } from '@/lib/estimator'
 import { db } from '@/db'
 import { conversations, messages, savingsEvents } from '@/db/schema'
 import { eq, desc } from 'drizzle-orm'
+
 import type { Tier, Model } from '@/types'
 import { rememberMessage, getContext } from './memory'
 
 const TIER_MODEL: Record<Tier, Model> = {
-  1: 'claude-haiku-4-5',
-  2: 'claude-sonnet-4-6',
-  3: 'claude-opus-4-7',
+  1: 'llama-3.1-8b-instant',
+  2: 'gpt-4o-mini',
+  3: 'claude-sonnet-4-6',
   4: 'claude-opus-4-7',
+}
+
+function callGateway(model: Model, messages: { role: 'user' | 'assistant' | 'system'; content: string }[]) {
+  if (model === 'llama-3.1-8b-instant') return callGroq(model, messages)
+  if (model === 'gpt-4o-mini') return callOpenAI(model, messages)
+  return callAnthropic(model, messages)
 }
 
 /** DB fallback: last N messages when MuBit is unavailable */
@@ -85,7 +92,7 @@ export async function routeMessage(args: {
     { role: 'user', content: prompt },
   ]
 
-  const response = await callAnthropic(model, allMessages)
+  const response = await callGateway(model, allMessages)
   const { usd, water_ml, carbon_g } = estimateCost(model, response.tokensIn, response.tokensOut)
 
   // contextSaved = true whenever MuBit injected context into the request
@@ -94,7 +101,7 @@ export async function routeMessage(args: {
   // Async: persist to DB + remember in MuBit + record context_trim savings
   Promise.resolve().then(async () => {
     try {
-      await db.insert(conversations).values({ id: conversationId }).onConflictDoNothing()
+      const isNew = await db.insert(conversations).values({ id: conversationId }).onConflictDoNothing().returning({ id: conversations.id })
 
       const [userRow] = await db.insert(messages).values({
         conversationId,
@@ -127,6 +134,24 @@ export async function routeMessage(args: {
           amountCarbonG: String(savings.carbon_g),
           messageId: userRow?.id ?? null,
         })
+      }
+
+      // Generate a short title for new conversations (fire-and-forget within this block)
+      if (isNew.length > 0) {
+        try {
+          const titleRes = await callAnthropic('claude-haiku-4-5-20251001', [
+            {
+              role: 'user',
+              content: `Generate a very short title (3-6 words max) for a chat that starts with this message. Reply with only the title, no punctuation, no quotes:\n\n${prompt.slice(0, 200)}`,
+            },
+          ])
+          const title = titleRes.content.trim().slice(0, 60)
+          if (title) {
+            await db.update(conversations).set({ title }).where(eq(conversations.id, conversationId))
+          }
+        } catch {
+          // non-fatal
+        }
       }
 
       await rememberMessage({ conversationId, role: 'user', content: prompt })

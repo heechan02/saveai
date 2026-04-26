@@ -61,3 +61,75 @@ export async function callAnthropic(
     finishReason: data.stop_reason ?? null,
   }
 }
+
+/**
+ * Call OpenAI-compatible model via PAIG's OpenAI proxy.
+ */
+export async function callOpenAI(
+  model: string,
+  messages: MessageParam[]
+): Promise<GatewayResponse> {
+  const apiKey = process.env.PYDANTIC_GATEWAY_KEY
+  if (!apiKey) throw new Error('PYDANTIC_GATEWAY_KEY is not set')
+
+  const res = await fetch('https://gateway-eu.pydantic.dev/proxy/openai/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({ model, messages, max_tokens: 4096 }),
+  })
+
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`OpenAI gateway error ${res.status}: ${text}`)
+  }
+
+  const data = await res.json()
+  const content = data.choices?.[0]?.message?.content ?? ''
+
+  return {
+    content,
+    tokensIn: data.usage?.prompt_tokens ?? 0,
+    tokensOut: data.usage?.completion_tokens ?? 0,
+    model: data.model ?? model,
+    finishReason: data.choices?.[0]?.finish_reason ?? null,
+  }
+}
+
+/**
+ * Call Groq model via PAIG's Groq proxy (OpenAI-compatible format).
+ */
+export async function callGroq(
+  model: string,
+  messages: MessageParam[]
+): Promise<GatewayResponse> {
+  const apiKey = process.env.PYDANTIC_GATEWAY_KEY
+  if (!apiKey) throw new Error('PYDANTIC_GATEWAY_KEY is not set')
+
+  const res = await fetch('https://gateway-eu.pydantic.dev/proxy/groq/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({ model, messages, max_tokens: 4096 }),
+  })
+
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Groq gateway error ${res.status}: ${text}`)
+  }
+
+  const data = await res.json()
+  const content = data.choices?.[0]?.message?.content ?? ''
+
+  return {
+    content,
+    tokensIn: data.usage?.prompt_tokens ?? 0,
+    tokensOut: data.usage?.completion_tokens ?? 0,
+    model: data.model ?? model,
+    finishReason: data.choices?.[0]?.finish_reason ?? null,
+  }
+}

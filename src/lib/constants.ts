@@ -27,9 +27,11 @@
  * Applied as: energy_wh = ENERGY_WH_PER_TOKEN[tier] × totalTokens
  */
 export const ENERGY_WH_PER_TOKEN = {
-  tier1_haiku:  0.000045,  // Wh per token
-  tier2_sonnet: 0.00015,   // Wh per token
-  tier3_opus:   0.0003,    // Wh per token
+  tier1_llama:      0.000040,  // Wh per token — Groq Llama 8B (Luccioni OPT-6.7B, H100-adjusted)
+  tier2_gpt4o_mini: 0.000080,  // Wh per token — GPT-4o-mini (~20B equiv, interpolated)
+  tier1_haiku:      0.000045,  // Wh per token — Claude Haiku
+  tier2_sonnet:     0.00015,   // Wh per token — Claude Sonnet
+  tier3_opus:       0.0003,    // Wh per token — Claude Opus
 } as const
 
 /**
@@ -47,15 +49,19 @@ export const CARBON_G_PER_KWH = 400
 
 /**
  * USD price per 1M tokens (input / output) at provider list prices.
- * All tiers route through Pydantic AI Gateway built-in Anthropic provider.
+ * All tiers route through Pydantic AI Gateway built-in providers.
  */
 export const PRICE_PER_MTOK = {
-  /** Tier 1 — Claude Haiku (Anthropic built-in via PAIG) */
-  claude_haiku: { in: 0.8, out: 4.0 },
-  /** Tier 2 — Claude Sonnet 4.6 (Anthropic built-in via PAIG) */
+  /** Tier 1 — Groq Llama 3.1 8B (Groq built-in via PAIG) */
+  groq_llama: { in: 0.05, out: 0.08 },
+  /** Tier 2 — GPT-4o-mini (OpenAI built-in via PAIG) */
+  gpt_4o_mini: { in: 0.15, out: 0.60 },
+  /** Tier 3 — Claude Sonnet 4.6 (Anthropic built-in via PAIG) */
   claude_sonnet: { in: 3.0, out: 15.0 },
-  /** Tier 3 — Claude Opus (Anthropic built-in via PAIG) */
+  /** Tier 4 — Claude Opus (Anthropic built-in via PAIG) */
   claude_opus: { in: 15.0, out: 75.0 },
+  /** Legacy — Claude Haiku (kept for DB backwards compat) */
+  claude_haiku: { in: 0.8, out: 4.0 },
 } as const
 
 /** Citation URLs for the methodology page */

@@ -2,15 +2,19 @@ import { ENERGY_WH_PER_TOKEN, WATER_L_PER_KWH, CARBON_G_PER_KWH, PRICE_PER_MTOK 
 import type { Model } from '../types'
 
 const MODEL_ENERGY_PER_TOKEN: Record<Model, number> = {
-  'claude-haiku-4-5':  ENERGY_WH_PER_TOKEN.tier1_haiku,
-  'claude-sonnet-4-6': ENERGY_WH_PER_TOKEN.tier2_sonnet,
-  'claude-opus-4-7':   ENERGY_WH_PER_TOKEN.tier3_opus,
+  'llama-3.1-8b-instant': ENERGY_WH_PER_TOKEN.tier1_llama,
+  'gpt-4o-mini':          ENERGY_WH_PER_TOKEN.tier2_gpt4o_mini,
+  'claude-haiku-4-5':     ENERGY_WH_PER_TOKEN.tier1_haiku,
+  'claude-sonnet-4-6':    ENERGY_WH_PER_TOKEN.tier2_sonnet,
+  'claude-opus-4-7':      ENERGY_WH_PER_TOKEN.tier3_opus,
 }
 
 const MODEL_PRICE: Record<Model, { in: number; out: number }> = {
-  'claude-haiku-4-5':  PRICE_PER_MTOK.claude_haiku,
-  'claude-sonnet-4-6': PRICE_PER_MTOK.claude_sonnet,
-  'claude-opus-4-7':   PRICE_PER_MTOK.claude_opus,
+  'llama-3.1-8b-instant': PRICE_PER_MTOK.groq_llama,
+  'gpt-4o-mini':          PRICE_PER_MTOK.gpt_4o_mini,
+  'claude-haiku-4-5':     PRICE_PER_MTOK.claude_haiku,
+  'claude-sonnet-4-6':    PRICE_PER_MTOK.claude_sonnet,
+  'claude-opus-4-7':      PRICE_PER_MTOK.claude_opus,
 }
 
 export function estimateCost(

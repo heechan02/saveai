@@ -102,7 +102,7 @@ export default function CostCliff({ signal, open, onAccept, onDismiss }: Props) 
                   This is a ${opusUsd.toFixed(4)} question.
                 </h2>
                 <p className="text-neutral-400 text-sm leading-relaxed">
-                  Claude Haiku answers it for ${flashUsd.toFixed(6)}.
+                  Fast / Groq Llama answers it for ${flashUsd.toFixed(6)}.
                   {ratio > 1 && ` That's ${ratio.toLocaleString()}× cheaper.`}
                 </p>
               </div>
@@ -110,7 +110,7 @@ export default function CostCliff({ signal, open, onAccept, onDismiss }: Props) 
               {/* Side-by-side comparison */}
               <div className="flex items-center gap-3">
                 <MiniCostCard
-                  label="Claude Opus"
+                  label="Powerful / Tier 4"
                   usd={opusUsd}
                   waterMl={opusWaterMl}
                   carbonG={opusCarbonG}
@@ -129,7 +129,7 @@ export default function CostCliff({ signal, open, onAccept, onDismiss }: Props) 
                 </motion.div>
 
                 <MiniCostCard
-                  label="Claude Haiku"
+                  label="Fast / Groq Llama"
                   usd={flashUsd}
                   waterMl={flashWaterMl}
                   carbonG={flashCarbonG}
@@ -153,7 +153,7 @@ export default function CostCliff({ signal, open, onAccept, onDismiss }: Props) 
                   style={{ background: '#16a34a' }}
                   autoFocus
                 >
-                  Use Claude Haiku
+                  Use Fast / Groq Llama
                 </button>
               </div>
             </motion.div>

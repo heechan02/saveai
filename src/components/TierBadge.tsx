@@ -10,16 +10,18 @@ const TIER_CONFIG: Record<Tier, {
   priceIn: number
   warn?: boolean
 }> = {
-  1: { label: 'Tier 1', model: 'claude-haiku-4-5',  color: '#22c55e', priceIn: 0.80  },
-  2: { label: 'Tier 2', model: 'claude-sonnet-4-6', color: '#3b82f6', priceIn: 3.00  },
-  3: { label: 'Tier 3', model: 'claude-opus-4-7',   color: '#f59e0b', priceIn: 15.00 },
-  4: { label: 'Tier 4', model: 'claude-opus-4-7',   color: '#ef4444', priceIn: 15.00, warn: true },
+  1: { label: 'Fast',      model: 'llama-3.1-8b-instant', color: '#22c55e', priceIn: 0.05  },
+  2: { label: 'Efficient', model: 'gpt-4o-mini',          color: '#3b82f6', priceIn: 0.15  },
+  3: { label: 'Balanced',  model: 'claude-sonnet-4-6',    color: '#f59e0b', priceIn: 3.00  },
+  4: { label: 'Powerful',  model: 'claude-opus-4-7',      color: '#ef4444', priceIn: 15.00, warn: true },
 }
 
 const MODEL_DISPLAY: Record<Model, string> = {
-  'claude-haiku-4-5':  'Claude Haiku 4.5',
-  'claude-sonnet-4-6': 'Claude Sonnet 4.6',
-  'claude-opus-4-7':   'Claude Opus 4.7',
+  'llama-3.1-8b-instant': 'Groq Llama 3.1 8B',
+  'gpt-4o-mini':          'GPT-4o mini',
+  'claude-haiku-4-5':     'Claude Haiku 4.5',
+  'claude-sonnet-4-6':    'Claude Sonnet 4.6',
+  'claude-opus-4-7':      'Claude Opus 4.7',
 }
 
 export default function TierBadge({ tier, model }: { tier: Tier; model?: Model }) {

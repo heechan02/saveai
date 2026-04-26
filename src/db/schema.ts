@@ -5,6 +5,7 @@ export const savingsKindEnum = pgEnum('savings_kind', ['cost_cliff', 'context_tr
 
 export const conversations = pgTable('conversations', {
   id: uuid('id').primaryKey().defaultRandom(),
+  title: text('title'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 

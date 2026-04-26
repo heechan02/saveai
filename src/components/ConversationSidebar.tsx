@@ -45,6 +45,9 @@ export default function ConversationSidebar({ activeId, onSelect, onNew, refresh
 
   useEffect(() => {
     fetchConvos()
+    // Delayed refresh to pick up LLM-generated title (async after first message)
+    const t = setTimeout(fetchConvos, 4000)
+    return () => clearTimeout(t)
   }, [fetchConvos, refreshTrigger])
 
   return (

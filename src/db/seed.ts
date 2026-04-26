@@ -98,16 +98,16 @@ const HISTORY: Array<{
 
   // Day 10
   {
-    daysAgo: 10, model: 'claude-haiku-4-5', tier: 1,
+    daysAgo: 10, model: 'llama-3.1-8b-instant', tier: 1,
     userPrompt: 'What is the difference between Promise.all and Promise.allSettled?',
     assistantReply: 'Promise.all: rejects immediately if any promise rejects. Use when all results are required.\nPromise.allSettled: waits for all promises regardless of rejection. Returns array of {status, value/reason}. Use when you need results even if some fail.',
-    tokensIn: 16, tokensOut: 65, costUsd: 0.0000071, waterMl: 0.0000073, carbonG: 0.0000016,
+    tokensIn: 16, tokensOut: 65, costUsd: 0.0000060, waterMl: 0.005832, carbonG: 0.001296,
   },
   {
-    daysAgo: 10, hoursOffset: 3, model: 'claude-haiku-4-5', tier: 2,
+    daysAgo: 10, hoursOffset: 3, model: 'gpt-4o-mini', tier: 2,
     userPrompt: 'Give me a regex to validate an email address.',
     assistantReply: '`/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$/`\n\nNote: RFC 5322 is far more complex. This covers 99% of real-world cases.',
-    tokensIn: 14, tokensOut: 48, costUsd: 0.0000203, waterMl: 0.0000068, carbonG: 0.0000016,
+    tokensIn: 14, tokensOut: 48, costUsd: 0.0000309, waterMl: 0.008928, carbonG: 0.001984,
   },
 
   // Day 9
@@ -126,10 +126,10 @@ const HISTORY: Array<{
     tokensIn: 22, tokensOut: 240, costUsd: 0.00426, waterMl: 0.0054, carbonG: 0.00126,
   },
   {
-    daysAgo: 8, hoursOffset: 2, model: 'claude-haiku-4-5', tier: 1,
+    daysAgo: 8, hoursOffset: 2, model: 'llama-3.1-8b-instant', tier: 1,
     userPrompt: 'Convert this to TypeScript: function add(a, b) { return a + b }',
     assistantReply: '```typescript\nfunction add(a: number, b: number): number {\n  return a + b\n}\n```',
-    tokensIn: 22, tokensOut: 38, costUsd: 0.0000045, waterMl: 0.0000049, carbonG: 0.0000011,
+    tokensIn: 22, tokensOut: 38, costUsd: 0.0000041, waterMl: 0.004320, carbonG: 0.000960,
   },
 
   // Day 7 — big context day (triggers ContextBloat in the demo conversation)
@@ -154,10 +154,10 @@ const HISTORY: Array<{
 
   // Day 5-6 — lighter usage
   {
-    daysAgo: 6, model: 'claude-haiku-4-5', tier: 2,
+    daysAgo: 6, model: 'gpt-4o-mini', tier: 2,
     userPrompt: 'Quick: what\'s the difference between interface and type in TypeScript?',
     assistantReply: 'Interfaces: extendable (declaration merging), better for object shapes, slightly faster in TS compiler.\nTypes: more flexible (unions, intersections, mapped types, conditional types), can alias primitives.\n\nRule of thumb: `interface` for public API shapes, `type` for complex compositions.',
-    tokensIn: 18, tokensOut: 60, costUsd: 0.0000254, waterMl: 0.0000088, carbonG: 0.0000020,
+    tokensIn: 18, tokensOut: 60, costUsd: 0.0000387, waterMl: 0.011232, carbonG: 0.002496,
   },
   {
     daysAgo: 5, model: 'claude-sonnet-4-6', tier: 3,
@@ -168,10 +168,10 @@ const HISTORY: Array<{
 
   // Day 3-4
   {
-    daysAgo: 4, model: 'claude-haiku-4-5', tier: 1,
+    daysAgo: 4, model: 'llama-3.1-8b-instant', tier: 1,
     userPrompt: 'What does the ?? operator do in JavaScript?',
     assistantReply: 'Nullish coalescing: returns right side only if left is `null` or `undefined`. Unlike `||`, it doesn\'t trigger on `0`, `""`, or `false`.\n\n```js\nnull ?? "default"      // "default"\nundefined ?? "default" // "default"\n0 ?? "default"         // 0  (|| would return "default")\n"" ?? "default"        // ""  (|| would return "default")\n```',
-    tokensIn: 14, tokensOut: 85, costUsd: 0.0000066, waterMl: 0.0000068, carbonG: 0.0000015,
+    tokensIn: 14, tokensOut: 85, costUsd: 0.0000075, waterMl: 0.007128, carbonG: 0.001584,
   },
   {
     daysAgo: 3, model: 'claude-opus-4-7', tier: 4,
@@ -180,10 +180,10 @@ const HISTORY: Array<{
     tokensIn: 22, tokensOut: 280, costUsd: 0.0216, waterMl: 0.0454, carbonG: 0.01041,
   },
   {
-    daysAgo: 3, hoursOffset: 3, model: 'claude-haiku-4-5', tier: 2,
+    daysAgo: 3, hoursOffset: 3, model: 'gpt-4o-mini', tier: 2,
     userPrompt: 'fix this typo: teh',
     assistantReply: 'the',
-    tokensIn: 8, tokensOut: 3, costUsd: 0.0000082, waterMl: 0.0000049, carbonG: 0.0000011,
+    tokensIn: 8, tokensOut: 3, costUsd: 0.0000030, waterMl: 0.001584, carbonG: 0.000352,
   },
   {
     daysAgo: 2, model: 'claude-sonnet-4-6', tier: 3,

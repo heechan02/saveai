@@ -21,9 +21,11 @@ const WATER_BENCHMARK  = 1.5   // mL  — UCR study midpoint
 const CARBON_BENCHMARK = 0.80  // g CO₂e — IEA 2024
 
 const MODEL_META: Record<Model, { name: string; tier: string }> = {
-  "claude-haiku-4-5":  { name: "Claude Haiku 4.5",  tier: "Fast"     },
-  "claude-sonnet-4-6": { name: "Claude Sonnet 4.6",  tier: "Balanced" },
-  "claude-opus-4-7":   { name: "Claude Opus 4.7",    tier: "Premium"  },
+  "llama-3.1-8b-instant": { name: "Groq Llama 3.1 8B", tier: "Fast"      },
+  "gpt-4o-mini":          { name: "GPT-4o mini",        tier: "Efficient" },
+  "claude-haiku-4-5":     { name: "Claude Haiku 4.5",   tier: "Fast"      },
+  "claude-sonnet-4-6":    { name: "Claude Sonnet 4.6",  tier: "Balanced"  },
+  "claude-opus-4-7":      { name: "Claude Opus 4.7",    tier: "Powerful"  },
 }
 
 // log-compressed normalisation so small values still show movement

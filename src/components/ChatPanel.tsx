@@ -9,9 +9,10 @@ import { estimateTokensFromText, estimateCost } from '@/lib/estimator'
 import type { Tier, Model, PreflightSignal, Message } from '@/types'
 
 const PILL_TIERS: { tier: Tier; label: string; sub: string; model: Model; warn?: boolean }[] = [
-  { tier: 1, label: 'Haiku',  sub: '$0.8',  model: 'claude-haiku-4-5'  },
-  { tier: 2, label: 'Sonnet', sub: '$3',    model: 'claude-sonnet-4-6' },
-  { tier: 3, label: 'Opus',   sub: '$15',   model: 'claude-opus-4-7', warn: true },
+  { tier: 1, label: 'Fast',      sub: 'Groq',   model: 'llama-3.1-8b-instant' },
+  { tier: 2, label: 'Efficient', sub: 'GPT-4o', model: 'gpt-4o-mini' },
+  { tier: 3, label: 'Balanced',  sub: 'Sonnet', model: 'claude-sonnet-4-6' },
+  { tier: 4, label: 'Powerful',  sub: 'Opus',   model: 'claude-opus-4-7', warn: true },
 ]
 
 function randomId() {

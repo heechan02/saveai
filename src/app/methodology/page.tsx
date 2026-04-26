@@ -9,21 +9,34 @@ const metrics: {
   note: React.ReactNode
 }[] = [
   {
-    name: 'Energy · Claude Haiku (Tier 1)',
-    value: `${ENERGY_WH_PER_TOKEN.tier1_haiku} Wh / token`,
+    name: 'Energy · Groq Llama 3.1 8B (Tier 1 — Fast)',
+    value: `${ENERGY_WH_PER_TOKEN.tier1_llama} Wh / token`,
     source: 'Luccioni et al. 2023 — "Power Hungry Processing" (NeurIPS)',
     url: SOURCES.luccioni,
     note: (
       <>
-        Interpolated from <em>OPT-6.7B hardware measurements</em>, adjusted for modern H100
-        efficiency gains (~2×). Actual range roughly{' '}
-        <strong className="text-neutral-400">0.00002–0.0001 Wh/token</strong> depending on batch
-        size and datacenter load.
+        Interpolated from <em>OPT-6.7B hardware measurements</em> (~0.000098 Wh/token), adjusted
+        for modern H100 efficiency on Groq LPU (~2×). Groq&apos;s custom silicon achieves the
+        highest tokens/sec of any provider — making this tier{' '}
+        <strong className="text-neutral-400">the lowest-energy option</strong>.
       </>
     ),
   },
   {
-    name: 'Energy · Claude Sonnet (Tier 2)',
+    name: 'Energy · GPT-4o mini (Tier 2 — Efficient)',
+    value: `${ENERGY_WH_PER_TOKEN.tier2_gpt4o_mini} Wh / token`,
+    source: 'Luccioni et al. 2023 (NeurIPS) + Epoch AI 2024',
+    url: SOURCES.epoch,
+    note: (
+      <>
+        Interpolated for an estimated ~20B parameter equivalent, between OPT-6.7B and OPT-66B
+        measurements. Cross-referenced with Epoch AI query-level estimates.{' '}
+        <strong className="text-neutral-400">Uncertainty band: ±50%.</strong>
+      </>
+    ),
+  },
+  {
+    name: 'Energy · Claude Sonnet (Tier 3 — Balanced)',
     value: `${ENERGY_WH_PER_TOKEN.tier2_sonnet} Wh / token`,
     source: 'Luccioni et al. 2023 (NeurIPS) + Epoch AI 2024',
     url: SOURCES.epoch,
@@ -36,7 +49,7 @@ const metrics: {
     ),
   },
   {
-    name: 'Energy · Claude Opus (Tier 3)',
+    name: 'Energy · Claude Opus (Tier 4 — Powerful)',
     value: `${ENERGY_WH_PER_TOKEN.tier3_opus} Wh / token`,
     source: 'Epoch AI 2024 — How much energy does ChatGPT use?',
     url: SOURCES.epoch,
@@ -166,6 +179,61 @@ export default function MethodologyPage() {
                     Note
                   </span>
                   <p className="text-xs text-neutral-500 leading-relaxed">{m.note}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Model Tier Rationale */}
+        <section className="space-y-5">
+          <h2 className="text-xs uppercase tracking-widest text-neutral-600 font-medium">
+            Model tier rationale
+          </h2>
+          <p className="text-xs text-neutral-500 leading-relaxed">
+            SaveAI is model-agnostic — we route to the best tool for the task regardless of provider.
+            Tier selection is based on capability-per-cost benchmarks, not brand loyalty.
+          </p>
+          <div
+            className="rounded-xl border border-neutral-800 divide-y divide-neutral-800"
+            style={{ background: '#111111' }}
+          >
+            {[
+              {
+                tier: 'Tier 1 — Fast',
+                model: 'Groq Llama 3.1 8B',
+                color: '#22c55e',
+                evidence: 'LMSYS Chatbot Arena ELO ~1150; Groq LPU delivers 800+ tokens/sec (fastest available). Best for autocomplete, typo fixes, simple lookups.',
+              },
+              {
+                tier: 'Tier 2 — Efficient',
+                model: 'GPT-4o mini',
+                color: '#3b82f6',
+                evidence: 'MMLU score 82% at $0.15/Mtok input — best capability-per-dollar for coding tasks, summarisation, and Q&A. Outperforms GPT-3.5 on most benchmarks at lower cost.',
+              },
+              {
+                tier: 'Tier 3 — Balanced',
+                model: 'Claude Sonnet 4.6',
+                color: '#f59e0b',
+                evidence: 'SWE-bench Verified: 49% solve rate — top of class for agentic coding and nuanced analysis. Strong instruction-following with 200k context window.',
+              },
+              {
+                tier: 'Tier 4 — Powerful',
+                model: 'Claude Opus 4.7',
+                color: '#ef4444',
+                evidence: 'GPQA Diamond: 74%; HumanEval: 90%+. Frontier reasoning, research synthesis, and multi-step planning. Reserve for tasks where quality justifies 300× cost vs Tier 1.',
+              },
+            ].map((item) => (
+              <div key={item.tier} className="px-5 py-4 flex items-start gap-4">
+                <span
+                  className="text-xs font-bold shrink-0 mt-0.5 rounded px-1.5 py-0.5"
+                  style={{ background: `${item.color}18`, color: item.color, border: `1px solid ${item.color}40` }}
+                >
+                  {item.tier.split(' — ')[1]}
+                </span>
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-neutral-300">{item.tier} · {item.model}</p>
+                  <p className="text-xs text-neutral-500 leading-relaxed">{item.evidence}</p>
                 </div>
               </div>
             ))}

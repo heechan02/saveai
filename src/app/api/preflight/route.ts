@@ -29,21 +29,21 @@ function textSimilarity(a: string, b: string): number {
 // Checks
 // ---------------------------------------------------------------------------
 async function costCliffCheck(prompt: string, tier: Tier): Promise<PreflightSignal | null> {
-  if (tier !== 3 || prompt.trim().length >= 100) return null
+  if (tier !== 4 || prompt.trim().length >= 100) return null
 
   const tokensIn = estimateTokensFromText(prompt)
   const tokensOut = tokensIn * 2
 
   const opusCost = estimateCost('claude-opus-4-7', tokensIn, tokensOut)
-  const flashCost = estimateCost('claude-haiku-4-5', tokensIn, tokensOut)
+  const flashCost = estimateCost('llama-3.1-8b-instant', tokensIn, tokensOut)
 
   return {
     kind: 'cost_cliff',
     severity: 'high',
-    message: `This is a $${opusCost.usd.toFixed(4)} question. Gemini Flash answers it for $${flashCost.usd.toFixed(6)}.`,
+    message: `This is a $${opusCost.usd.toFixed(4)} question. Groq Llama answers it for $${flashCost.usd.toFixed(6)}.`,
     suggestedAction: {
       switchToTier: 1,
-      switchToModel: 'claude-haiku-4-5',
+      switchToModel: 'llama-3.1-8b-instant',
       opusUsd: opusCost.usd,
       flashUsd: flashCost.usd,
       opusWaterMl: opusCost.water_ml,
@@ -161,10 +161,10 @@ export async function POST(req: NextRequest) {
         carbon_g = (sa.opusCarbonG ?? 0) - (sa.flashCarbonG ?? 0)
       } else if (signal.kind === 'context_bloat') {
         const trimmedTokens = (sa.totalTokens ?? 0) - (sa.relevantTokens ?? 0)
-        const tierCost = estimateCost(tier === 3 ? 'claude-opus-4-7' : 'claude-haiku-4-5', trimmedTokens, 0)
+        const tierCost = estimateCost(tier === 4 ? 'claude-opus-4-7' : 'llama-3.1-8b-instant', trimmedTokens, 0)
         usd = tierCost.usd; water_ml = tierCost.water_ml; carbon_g = tierCost.carbon_g
       } else if (signal.kind === 'duplicate') {
-        const tierCost = estimateCost(tier === 3 ? 'claude-opus-4-7' : 'claude-haiku-4-5', promptTokens, promptTokens * 2)
+        const tierCost = estimateCost(tier === 4 ? 'claude-opus-4-7' : 'llama-3.1-8b-instant', promptTokens, promptTokens * 2)
         usd = tierCost.usd; water_ml = tierCost.water_ml; carbon_g = tierCost.carbon_g
       }
       emitSpan('saveai.preflight.signal_generated', {

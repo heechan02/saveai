@@ -9,6 +9,7 @@ export async function GET() {
       .select({
         id: conversations.id,
         createdAt: conversations.createdAt,
+        title: conversations.title,
         preview: sql<string>`(
           SELECT content FROM messages
           WHERE conversation_id = ${conversations.id} AND role = 'user'
@@ -28,7 +29,7 @@ export async function GET() {
       conversations: rows.map((r) => ({
         id: r.id,
         createdAt: r.createdAt,
-        preview: r.preview ? r.preview.slice(0, 60) : 'New conversation',
+        preview: r.title ?? (r.preview ? r.preview.slice(0, 60) : 'New conversation'),
         model: r.model,
       })),
     })
