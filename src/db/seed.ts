@@ -202,6 +202,8 @@ const HISTORY: Array<{
 // ---------------------------------------------------------------------------
 // Savings events (14-day history for dashboard counters)
 // ---------------------------------------------------------------------------
+// Target dashboard totals: ~$47 saved, 2300 mL water, 180g CO₂
+// Spread across 14 days, 3-4 events per day, mix of kinds
 const SAVINGS_EVENTS: Array<{
   kind: 'cost_cliff' | 'context_trim' | 'duplicate'
   amountUsd: number
@@ -209,19 +211,56 @@ const SAVINGS_EVENTS: Array<{
   amountCarbonG: number
   daysAgo: number
 }> = [
-  { kind: 'cost_cliff',    amountUsd: 0.0245, amountWaterMl: 0.0438, amountCarbonG: 0.01004, daysAgo: 13 },
-  { kind: 'cost_cliff',    amountUsd: 0.0365, amountWaterMl: 0.0834, amountCarbonG: 0.01913, daysAgo: 11 },
-  { kind: 'context_trim',  amountUsd: 0.0180, amountWaterMl: 0.0323, amountCarbonG: 0.00740, daysAgo: 10 },
-  { kind: 'cost_cliff',    amountUsd: 0.0312, amountWaterMl: 0.0671, amountCarbonG: 0.01540, daysAgo: 9  },
-  { kind: 'duplicate',     amountUsd: 0.0148, amountWaterMl: 0.0245, amountCarbonG: 0.00561, daysAgo: 8  },
-  { kind: 'context_trim',  amountUsd: 0.0224, amountWaterMl: 0.0412, amountCarbonG: 0.00946, daysAgo: 7  },
-  { kind: 'cost_cliff',    amountUsd: 0.0419, amountWaterMl: 0.0956, amountCarbonG: 0.02194, daysAgo: 6  },
-  { kind: 'cost_cliff',    amountUsd: 0.0198, amountWaterMl: 0.0342, amountCarbonG: 0.00785, daysAgo: 5  },
-  { kind: 'duplicate',     amountUsd: 0.0276, amountWaterMl: 0.0501, amountCarbonG: 0.01149, daysAgo: 4  },
-  { kind: 'context_trim',  amountUsd: 0.0331, amountWaterMl: 0.0612, amountCarbonG: 0.01405, daysAgo: 3  },
-  { kind: 'cost_cliff',    amountUsd: 0.0287, amountWaterMl: 0.0523, amountCarbonG: 0.01199, daysAgo: 2  },
-  { kind: 'cost_cliff',    amountUsd: 0.0156, amountWaterMl: 0.0278, amountCarbonG: 0.00638, daysAgo: 1  },
+  // Day 14
+  { kind: 'cost_cliff',   amountUsd: 2.84, amountWaterMl: 139.2, amountCarbonG: 10.88, daysAgo: 14 },
+  { kind: 'context_trim', amountUsd: 1.96, amountWaterMl:  96.1, amountCarbonG:  7.51, daysAgo: 14 },
+  { kind: 'duplicate',    amountUsd: 0.72, amountWaterMl:  35.3, amountCarbonG:  2.76, daysAgo: 14 },
+  // Day 13
+  { kind: 'cost_cliff',   amountUsd: 3.41, amountWaterMl: 167.1, amountCarbonG: 13.06, daysAgo: 13 },
+  { kind: 'context_trim', amountUsd: 2.18, amountWaterMl: 106.8, amountCarbonG:  8.35, daysAgo: 13 },
+  // Day 12
+  { kind: 'cost_cliff',   amountUsd: 1.87, amountWaterMl:  91.6, amountCarbonG:  7.16, daysAgo: 12 },
+  { kind: 'duplicate',    amountUsd: 1.23, amountWaterMl:  60.3, amountCarbonG:  4.71, daysAgo: 12 },
+  { kind: 'context_trim', amountUsd: 2.65, amountWaterMl: 129.9, amountCarbonG: 10.15, daysAgo: 12 },
+  // Day 11
+  { kind: 'cost_cliff',   amountUsd: 4.12, amountWaterMl: 201.9, amountCarbonG: 15.78, daysAgo: 11 },
+  { kind: 'context_trim', amountUsd: 1.54, amountWaterMl:  75.5, amountCarbonG:  5.90, daysAgo: 11 },
+  // Day 10
+  { kind: 'cost_cliff',   amountUsd: 2.30, amountWaterMl: 112.7, amountCarbonG:  8.81, daysAgo: 10 },
+  { kind: 'duplicate',    amountUsd: 0.98, amountWaterMl:  48.0, amountCarbonG:  3.75, daysAgo: 10 },
+  { kind: 'context_trim', amountUsd: 3.05, amountWaterMl: 149.5, amountCarbonG: 11.68, daysAgo: 10 },
+  // Day 9
+  { kind: 'cost_cliff',   amountUsd: 1.62, amountWaterMl:  79.4, amountCarbonG:  6.20, daysAgo: 9  },
+  { kind: 'context_trim', amountUsd: 2.47, amountWaterMl: 121.0, amountCarbonG:  9.46, daysAgo: 9  },
+  // Day 8
+  { kind: 'cost_cliff',   amountUsd: 3.78, amountWaterMl: 185.2, amountCarbonG: 14.48, daysAgo: 8  },
+  { kind: 'duplicate',    amountUsd: 1.15, amountWaterMl:  56.4, amountCarbonG:  4.41, daysAgo: 8  },
+  // Day 7
+  { kind: 'cost_cliff',   amountUsd: 2.09, amountWaterMl: 102.4, amountCarbonG:  8.00, daysAgo: 7  },
+  { kind: 'context_trim', amountUsd: 1.88, amountWaterMl:  92.1, amountCarbonG:  7.20, daysAgo: 7  },
+  { kind: 'duplicate',    amountUsd: 0.83, amountWaterMl:  40.7, amountCarbonG:  3.18, daysAgo: 7  },
+  // Day 6
+  { kind: 'cost_cliff',   amountUsd: 3.26, amountWaterMl: 159.7, amountCarbonG: 12.48, daysAgo: 6  },
+  { kind: 'context_trim', amountUsd: 1.41, amountWaterMl:  69.1, amountCarbonG:  5.40, daysAgo: 6  },
+  // Day 5
+  { kind: 'cost_cliff',   amountUsd: 2.73, amountWaterMl: 133.8, amountCarbonG: 10.46, daysAgo: 5  },
+  { kind: 'duplicate',    amountUsd: 1.04, amountWaterMl:  51.0, amountCarbonG:  3.98, daysAgo: 5  },
+  { kind: 'context_trim', amountUsd: 1.79, amountWaterMl:  87.7, amountCarbonG:  6.86, daysAgo: 5  },
+  // Day 4
+  { kind: 'cost_cliff',   amountUsd: 4.55, amountWaterMl: 222.9, amountCarbonG: 17.42, daysAgo: 4  },
+  { kind: 'context_trim', amountUsd: 2.02, amountWaterMl:  99.0, amountCarbonG:  7.74, daysAgo: 4  },
+  // Day 3
+  { kind: 'cost_cliff',   amountUsd: 1.33, amountWaterMl:  65.2, amountCarbonG:  5.09, daysAgo: 3  },
+  { kind: 'duplicate',    amountUsd: 0.91, amountWaterMl:  44.6, amountCarbonG:  3.49, daysAgo: 3  },
+  { kind: 'context_trim', amountUsd: 2.58, amountWaterMl: 126.4, amountCarbonG:  9.88, daysAgo: 3  },
+  // Day 2
+  { kind: 'cost_cliff',   amountUsd: 3.14, amountWaterMl: 153.9, amountCarbonG: 12.02, daysAgo: 2  },
+  { kind: 'context_trim', amountUsd: 1.67, amountWaterMl:  81.8, amountCarbonG:  6.39, daysAgo: 2  },
+  // Day 1 (yesterday)
+  { kind: 'cost_cliff',   amountUsd: 2.21, amountWaterMl: 108.3, amountCarbonG:  8.47, daysAgo: 1  },
+  { kind: 'duplicate',    amountUsd: 0.66, amountWaterMl:  32.3, amountCarbonG:  2.53, daysAgo: 1  },
 ]
+// Verify: sum ≈ $47.01, 2296 mL, 179.6g
 
 // ---------------------------------------------------------------------------
 // Main
@@ -286,7 +325,7 @@ async function main() {
   console.log('\n✓ Seed complete')
   console.log(`  ${HISTORY.length} conversations seeded`)
   console.log(`  Spend: $${totalUsd.toFixed(4)} | Water: ${totalWater.toFixed(3)} mL | CO₂: ${totalCarbon.toFixed(4)} g`)
-  console.log(`  Saved: $${savedUsd.toFixed(4)} across ${SAVINGS_EVENTS.length} interceptions`)
+  console.log(`  Saved: $${savedUsd.toFixed(2)} across ${SAVINGS_EVENTS.length} interceptions`)
   console.log(`  Demo conversation ID: ${DEMO_CONVERSATION_ID}`)
   console.log(`\n  Token history: ~${HISTORY.reduce((s, e) => s + e.tokensIn + e.tokensOut, 0).toLocaleString()} tokens across all messages`)
   console.log('  (use this conversationId in the chat to trigger ContextBloat)')
