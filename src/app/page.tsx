@@ -14,7 +14,7 @@ export default function Home() {
       >
         <Link href="/" className="flex items-center gap-2.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="SaveAI logo" className="h-8 w-auto" style={{ mixBlendMode: "screen" }} />
+          <img src="/logo.png" alt="SaveAI logo" className="h-8 w-auto" />
           <span className="font-semibold text-white tracking-tight" style={{ fontSize: 18 }}>
             SaveAI
           </span>
