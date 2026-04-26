@@ -40,7 +40,7 @@ function MiniCostCard({
       <span
         className="tabular-nums font-semibold"
         style={{
-          fontFamily: "'JetBrains Mono', monospace",
+          fontFamily: "var(--font-jetbrains-mono), monospace",
           fontSize: 22,
           color: highlight ? '#10b981' : '#ef4444',
         }}
@@ -98,7 +98,7 @@ export default function CostCliff({ signal, open, onAccept, onDismiss }: Props) 
             >
               {/* Header */}
               <div className="flex flex-col gap-1.5">
-                <h2 className="text-2xl font-semibold text-white">
+                <h2 className="text-2xl font-semibold text-white font-sans">
                   This is a ${opusUsd.toFixed(4)} question.
                 </h2>
                 <p className="text-neutral-400 text-sm leading-relaxed">
