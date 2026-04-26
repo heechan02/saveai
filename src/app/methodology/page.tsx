@@ -106,12 +106,13 @@ export default function MethodologyPage() {
       >
         <Link href="/" className="flex items-center gap-2.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="SaveAI logo" className="h-8 w-auto" />
-          <span className="font-semibold text-white tracking-tight" style={{ fontSize: 18 }}>
+          <img src="/logo.png" alt="SaveAI logo" className="h-7 w-auto" />
+          <span className="font-semibold text-white tracking-tight" style={{ fontSize: 16 }}>
             SaveAI
           </span>
         </Link>
-        <nav className="flex items-center gap-6 text-sm">
+        <nav className="flex items-center gap-10 text-sm">
+          <Link href="/about" className="text-neutral-500 hover:text-neutral-300 transition-colors">About</Link>
           <Link href="/" className="text-neutral-500 hover:text-neutral-300 transition-colors">Chat</Link>
           <Link href="/dashboard" className="text-neutral-500 hover:text-neutral-300 transition-colors">Dashboard</Link>
           <Link href="/methodology" className="text-white">Methodology</Link>
