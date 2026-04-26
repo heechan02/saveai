@@ -1,14 +1,38 @@
-import { callAnthropic, callGemini } from '@/lib/gateway'
+import { callAnthropic } from '@/lib/gateway'
 import { estimateCost } from '@/lib/estimator'
 import { db } from '@/db'
-import { conversations, messages } from '@/db/schema'
+import { conversations, messages, savingsEvents } from '@/db/schema'
+import { eq, desc } from 'drizzle-orm'
 import type { Tier, Model } from '@/types'
+import { rememberMessage, getContext } from './memory'
 
-const TIER_MODEL: Record<Tier, { model: Model; fn: 'anthropic' | 'gemini' }> = {
-  1: { model: 'gemini-2.5-flash',  fn: 'gemini'    },
-  2: { model: 'claude-haiku-4-5',  fn: 'anthropic'  },
-  3: { model: 'claude-sonnet-4-6', fn: 'anthropic'  },
-  4: { model: 'claude-opus-4-7',   fn: 'anthropic'  },
+const TIER_MODEL: Record<Tier, Model> = {
+  1: 'claude-haiku-4-5',
+  2: 'claude-sonnet-4-6',
+  3: 'claude-opus-4-7',
+  4: 'claude-opus-4-7',
+}
+
+/** DB fallback: last N messages when MuBit is unavailable */
+async function getDbHistory(
+  conversationId: string,
+  limit = 10
+): Promise<{ role: 'user' | 'assistant'; content: string }[]> {
+  try {
+    const history = await db
+      .select({ role: messages.role, content: messages.content })
+      .from(messages)
+      .where(eq(messages.conversationId, conversationId))
+      .orderBy(desc(messages.createdAt))
+      .limit(limit)
+
+    return history
+      .reverse()
+      .filter((m) => m.role === 'user' || m.role === 'assistant')
+      .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }))
+  } catch {
+    return []
+  }
 }
 
 export async function routeMessage(args: {
@@ -25,30 +49,61 @@ export async function routeMessage(args: {
   costUsd: number
   waterMl: number
   carbonG: number
+  contextSaved?: boolean
+  savedPercent?: number
 }> {
-  const { prompt, tier, conversationId } = args
-  const { model, fn } = TIER_MODEL[tier]
+  const { prompt, tier, conversationId, useMinimalContext } = args
+  const model = TIER_MODEL[tier]
 
-  const userMessages = [{ role: 'user' as const, content: prompt }]
+  // Token budget: tight for "Trim with MuBit", normal otherwise
+  const tokenBudget = useMinimalContext ? 1000 : 4000
 
-  const response =
-    fn === 'gemini'
-      ? await callGemini(model, userMessages)
-      : await callAnthropic(model, userMessages)
+  // Fetch context from MuBit (falls back gracefully)
+  const mubitCtx = await getContext({
+    conversationId,
+    currentPrompt: prompt,
+    tokenBudget,
+  })
 
+  let contextMessages: { role: 'user' | 'assistant' | 'system'; content: string }[]
+
+  if (mubitCtx.mubitUsed && mubitCtx.messages.length > 0) {
+    contextMessages = mubitCtx.messages as { role: 'user' | 'assistant' | 'system'; content: string }[]
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[MuBit] context used — trimmedTokens:', mubitCtx.trimmedTokens, 'savedPercent:', mubitCtx.savedPercent)
+    }
+  } else {
+    const dbHistory = await getDbHistory(conversationId, useMinimalContext ? 4 : 10)
+    contextMessages = dbHistory
+    if (!mubitCtx.mubitUsed && process.env.NODE_ENV === 'development') {
+      console.warn('[MuBit] offline — using fallback DB context')
+    }
+  }
+
+  const allMessages: { role: 'user' | 'assistant' | 'system'; content: string }[] = [
+    ...contextMessages,
+    { role: 'user', content: prompt },
+  ]
+
+  const response = await callAnthropic(model, allMessages)
   const { usd, water_ml, carbon_g } = estimateCost(model, response.tokensIn, response.tokensOut)
 
-  // Persist to DB — non-fatal, don't block the response
+  // contextSaved = true whenever MuBit injected context into the request
+  const contextSaved = mubitCtx.mubitUsed && mubitCtx.messages.length > 0
+
+  // Async: persist to DB + remember in MuBit + record context_trim savings
   Promise.resolve().then(async () => {
     try {
       await db.insert(conversations).values({ id: conversationId }).onConflictDoNothing()
-      await db.insert(messages).values({
+
+      const [userRow] = await db.insert(messages).values({
         conversationId,
         role: 'user',
         content: prompt,
         model,
         tier,
-      })
+      }).returning({ id: messages.id })
+
       await db.insert(messages).values({
         conversationId,
         role: 'assistant',
@@ -61,8 +116,23 @@ export async function routeMessage(args: {
         model,
         tier,
       })
+
+      if (mubitCtx.mubitUsed && mubitCtx.trimmedTokens < mubitCtx.originalTokens) {
+        const savedTokens = mubitCtx.originalTokens - mubitCtx.trimmedTokens
+        const savings = estimateCost(model, savedTokens, 0)
+        await db.insert(savingsEvents).values({
+          kind: 'context_trim',
+          amountUsd: String(savings.usd),
+          amountWaterMl: String(savings.water_ml),
+          amountCarbonG: String(savings.carbon_g),
+          messageId: userRow?.id ?? null,
+        })
+      }
+
+      await rememberMessage({ conversationId, role: 'user', content: prompt })
+      await rememberMessage({ conversationId, role: 'assistant', content: response.content })
     } catch (e) {
-      console.warn('DB persist failed (non-fatal):', e)
+      console.warn('DB/MuBit persist failed (non-fatal):', e)
     }
   })
 
@@ -75,5 +145,7 @@ export async function routeMessage(args: {
     costUsd: usd,
     waterMl: water_ml,
     carbonG: carbon_g,
+    contextSaved,
+    savedPercent: contextSaved && mubitCtx.savedPercent > 0 ? mubitCtx.savedPercent : undefined,
   }
 }

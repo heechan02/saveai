@@ -4,14 +4,15 @@ import { useRef, useState, useEffect } from 'react'
 import { Send } from 'lucide-react'
 import ImpactMeter from '@/components/ImpactMeter'
 import TierBadge from '@/components/TierBadge'
-import { estimateTokensFromText } from '@/lib/estimator'
-import type { Tier, Model } from '@/types'
+import PreflightOrchestrator from '@/components/PreflightOrchestrator'
+import { estimateTokensFromText, estimateCost } from '@/lib/estimator'
+import type { Tier, Model, PreflightSignal } from '@/types'
 
 const TIER_OPTIONS: { tier: Tier; label: string; model: Model; priceIn: number; warn?: boolean }[] = [
-  { tier: 1, label: 'Tier 1 — Gemini Flash',   model: 'gemini-2.5-flash',  priceIn: 0.075 },
-  { tier: 2, label: 'Tier 2 — Claude Haiku',   model: 'claude-haiku-4-5',  priceIn: 0.80  },
-  { tier: 3, label: 'Tier 3 — Claude Sonnet',  model: 'claude-sonnet-4-6', priceIn: 3.00  },
-  { tier: 4, label: 'Tier 4 — Claude Opus',    model: 'claude-opus-4-7',   priceIn: 15.00, warn: true },
+  { tier: 1, label: 'Tier 1 — Claude Haiku',  model: 'claude-haiku-4-5',  priceIn: 0.80  },
+  { tier: 2, label: 'Tier 2 — Claude Sonnet', model: 'claude-sonnet-4-6', priceIn: 3.00  },
+  { tier: 3, label: 'Tier 3 — Claude Opus',   model: 'claude-opus-4-7',   priceIn: 15.00 },
+  { tier: 4, label: 'Tier 4 — Claude Opus ⚠', model: 'claude-opus-4-7',   priceIn: 15.00, warn: true },
 ]
 
 type Message = {
@@ -20,6 +21,8 @@ type Message = {
   content: string
   tier?: Tier
   model?: Model
+  contextSaved?: boolean
+  savedPercent?: number
 }
 
 function randomId() {
@@ -34,6 +37,10 @@ export default function ChatPanel() {
   const [conversationId] = useState(() => crypto.randomUUID())
   const bottomRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // Preflight state
+  const [preflightSignals, setPreflightSignals] = useState<PreflightSignal[]>([])
+  const pendingRef = useRef<{ text: string; tier: Tier } | null>(null)
 
   const selectedOption = TIER_OPTIONS.find((o) => o.tier === tier)!
   const tokensIn = estimateTokensFromText(input)
@@ -52,21 +59,13 @@ export default function ChatPanel() {
     el.style.height = Math.min(el.scrollHeight, maxH) + 'px'
   }
 
-  async function handleSend() {
-    const text = input.trim()
-    if (!text || sending) return
-
-    const userMsg: Message = { id: randomId(), role: 'user', content: text }
-    setMessages((m) => [...m, userMsg])
-    setInput('')
-    if (textareaRef.current) textareaRef.current.style.height = 'auto'
+  async function fireChatRequest(text: string, effectiveTier: Tier, useMinimalContext?: boolean) {
     setSending(true)
-
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: text, tier, conversationId }),
+        body: JSON.stringify({ prompt: text, tier: effectiveTier, conversationId, useMinimalContext }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Request failed')
@@ -77,20 +76,138 @@ export default function ChatPanel() {
         content: data.content,
         tier: data.tier,
         model: data.model,
+        contextSaved: data.contextSaved ?? false,
+        savedPercent: data.savedPercent,
       }
       setMessages((m) => [...m, assistantMsg])
+      return data
     } catch (err) {
       const errMsg: Message = {
         id: randomId(),
         role: 'assistant',
         content: `Error: ${err instanceof Error ? err.message : 'Unknown error'}`,
-        tier,
-        model: selectedOption.model,
+        tier: effectiveTier,
+        model: TIER_OPTIONS.find((o) => o.tier === effectiveTier)?.model,
       }
       setMessages((m) => [...m, errMsg])
+      return null
     } finally {
       setSending(false)
     }
+  }
+
+  async function recordSavings(
+    kind: 'cost_cliff' | 'context_trim' | 'duplicate',
+    amountUsd: number,
+    amountWaterMl: number,
+    amountCarbonG: number
+  ) {
+    try {
+      await fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kind, amountUsd, amountWaterMl, amountCarbonG }),
+      })
+    } catch {
+      // non-fatal
+    }
+  }
+
+  async function handleSend() {
+    const text = input.trim()
+    if (!text || sending) return
+
+    const userMsg: Message = { id: randomId(), role: 'user', content: text }
+    setMessages((m) => [...m, userMsg])
+    setInput('')
+    if (textareaRef.current) textareaRef.current.style.height = 'auto'
+
+    // Step 1: preflight check
+    let signals: PreflightSignal[] = []
+    try {
+      const pfRes = await fetch('/api/preflight', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: text, tier, conversationId }),
+      })
+      if (pfRes.ok) {
+        const pfData = await pfRes.json()
+        signals = pfData.signals ?? []
+      }
+    } catch {
+      // preflight failure is non-fatal — proceed without signals
+    }
+
+    if (signals.length > 0) {
+      // Store pending request; wait for modal resolution
+      pendingRef.current = { text, tier }
+      setPreflightSignals(signals)
+      return
+    }
+
+    // No signals — send directly
+    await fireChatRequest(text, tier)
+  }
+
+  async function handleModalAccept(signal: PreflightSignal, action: Record<string, unknown>) {
+    setPreflightSignals([])
+    const pending = pendingRef.current
+    pendingRef.current = null
+    if (!pending) return
+
+    if (signal.kind === 'duplicate') {
+      // Show cached answer inline, record $0 savings
+      const cachedAnswer = action.previousAnswer as string | undefined
+      if (cachedAnswer) {
+        setMessages((m) => [
+          ...m,
+          {
+            id: randomId(),
+            role: 'assistant',
+            content: cachedAnswer,
+            tier: pending.tier,
+            model: selectedOption.model,
+          },
+        ])
+      }
+      await recordSavings('duplicate', 0, 0, 0)
+      return
+    }
+
+    if (signal.kind === 'cost_cliff') {
+      const newTier = (action.switchToTier as Tier) ?? 1
+      setTier(newTier)
+      const data = await fireChatRequest(pending.text, newTier)
+      if (data) {
+        // Compute savings: opus cost - actual cost
+        const tokensIn = estimateTokensFromText(pending.text)
+        const tokensOut = tokensIn * 2
+        const opusCost = estimateCost('claude-opus-4-7', tokensIn, tokensOut)
+        const flashCost = estimateCost('claude-haiku-4-5', tokensIn, tokensOut)
+        await recordSavings(
+          'cost_cliff',
+          opusCost.usd - flashCost.usd,
+          opusCost.water_ml - flashCost.water_ml,
+          opusCost.carbon_g - flashCost.carbon_g
+        )
+      }
+      return
+    }
+
+    if (signal.kind === 'context_bloat') {
+      await fireChatRequest(pending.text, pending.tier, true)
+      await recordSavings('context_trim', 0, 0, 0)
+      return
+    }
+  }
+
+  function handleModalDismiss() {
+    const pending = pendingRef.current
+    pendingRef.current = null
+    setPreflightSignals([])
+    if (!pending) return
+    // Send original request unchanged
+    fireChatRequest(pending.text, pending.tier)
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -105,6 +222,13 @@ export default function ChatPanel() {
       className="flex flex-col h-full"
       style={{ background: '#0a0a0a', fontFamily: 'var(--font-inter), Inter, system-ui, sans-serif' }}
     >
+      {/* Preflight modals */}
+      <PreflightOrchestrator
+        signals={preflightSignals}
+        onAccept={handleModalAccept}
+        onDismiss={handleModalDismiss}
+      />
+
       {/* Message history */}
       <div className="flex-1 overflow-y-auto px-4 py-6">
         <div className="max-w-3xl mx-auto flex flex-col gap-4">
@@ -120,7 +244,17 @@ export default function ChatPanel() {
               className={`flex flex-col gap-1 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
             >
               {msg.role === 'assistant' && msg.tier && msg.model && (
-                <TierBadge tier={msg.tier} model={msg.model} />
+                <div className="flex items-center gap-2">
+                  <TierBadge tier={msg.tier} model={msg.model} />
+                  {msg.contextSaved && (
+                    <span
+                      className="text-xs rounded px-2 py-0.5 font-medium"
+                      style={{ background: '#14532d', color: '#4ade80', border: '1px solid #166534' }}
+                    >
+                      context saved {msg.savedPercent != null ? `${msg.savedPercent}%` : '✓'}
+                    </span>
+                  )}
+                </div>
               )}
               <div
                 className="rounded-lg px-4 py-3 text-sm leading-relaxed"

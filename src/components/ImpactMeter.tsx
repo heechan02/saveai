@@ -23,8 +23,6 @@ const MODEL_META: Record<Model, { name: string; tier: string }> = {
   "claude-haiku-4-5":  { name: "Claude Haiku 4.5",  tier: "Fast"     },
   "claude-sonnet-4-6": { name: "Claude Sonnet 4.6",  tier: "Balanced" },
   "claude-opus-4-7":   { name: "Claude Opus 4.7",    tier: "Premium"  },
-  "gemini-2.5-flash":  { name: "Gemini 2.5 Flash",   tier: "Fast"     },
-  "gemini-2.5-pro":    { name: "Gemini 2.5 Pro",     tier: "Balanced" },
 }
 
 // log-compressed normalisation so small values still show movement

@@ -3,6 +3,7 @@
  * Run: npx tsx src/db/migrate.ts
  * Ensures pgvector extension exists, then defers schema push to drizzle-kit CLI.
  */
+import 'dotenv/config'
 import postgres from 'postgres'
 
 async function main() {
